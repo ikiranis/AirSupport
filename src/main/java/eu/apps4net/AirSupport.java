@@ -81,7 +81,7 @@ public class AirSupport {
                 // Reads each word and removes (strips) the white space
                 String token = itr.nextToken().strip();
 
-                System.out.println(token);
+//                System.out.println(token);
                 word.set(String.valueOf(token));
 
                 try {
@@ -95,18 +95,17 @@ public class AirSupport {
         }
     }
 
-    public static class AvgReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
-        private final IntWritable result = new IntWritable();
+    public static class TweetsReducer extends Reducer<Text, LongWritable, Text, Text> {
+        private final Text result = new Text();
 
-        public void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
-            int sum = 0;
+        public void reduce(Text key, Iterable<LongWritable> values, Context context) throws IOException, InterruptedException {
+            StringBuilder text = new StringBuilder();
 
-            for (IntWritable val : values) {
-                sum += val.get();
+            for (LongWritable val : values) {
+                text.append(String.valueOf(val)).append(" ");
             }
 
-            // Parse the formatted string back into a float
-            result.set(sum);
+            result.set(String.valueOf(text));
 
             context.write(key, result);
         }
@@ -117,7 +116,7 @@ public class AirSupport {
         Job job = Job.getInstance(conf, "Airline tweets");
         job.setJarByClass(AirSupport.class);
         job.setMapperClass(TokenizerMapper.class);
-//        job.setReducerClass(AvgReducer.class);
+        job.setReducerClass(TweetsReducer.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(LongWritable.class);
         FileInputFormat.addInputPath(job, new Path(args[0]));
