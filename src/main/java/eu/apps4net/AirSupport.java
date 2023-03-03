@@ -6,7 +6,9 @@ import java.util.StringTokenizer;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -53,52 +55,50 @@ public class AirSupport {
         }
     }
 
-    public static class TokenizerMapper extends Mapper<Object, Text, Text, IntWritable> {
+    public static class TokenizerMapper extends Mapper<Object, Text, Text, DoubleWritable> {
 
-        private final static IntWritable one = new IntWritable();
+        private final static DoubleWritable tweetId = new DoubleWritable();
         private final Text word = new Text();
 
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-            Tweet tweet;
+            Tweet tweet = null;
 
             String line = value.toString();
+            String tweetText = "";
 
             // Αφαίρεση σημείων στίξης και μετατροπή σε lower case
-            line = line.toLowerCase();
-
-            System.out.println(Arrays.toString(processLine(line)));
             String[] tweetArray = processLine(line);
 
             if(tweetArray != null) {
                 tweet = new Tweet(tweetArray[0], tweetArray[1], tweetArray[2], tweetArray[3], tweetArray[4], tweetArray[5], tweetArray[6], tweetArray[7], tweetArray[8], tweetArray[9]);
 
-                System.out.println(tweet);
+                // Αφαίρεση σημείων στίξης και μετατροπή σε lower case
+                tweetText = tweet.getText().replaceAll("\\p{Punct}", " ").toLowerCase();
             }
 
 
-            StringTokenizer itr = new StringTokenizer(line);
+            StringTokenizer itr = new StringTokenizer(tweetText);
             while (itr.hasMoreTokens()) {
                 // Reads each word and removes (strips) the white space
                 String token = itr.nextToken().strip();
 
-                // Αν δεν αρχίζει από αριθμό
-                if(!token.matches("^\\d.*")) {
-                    word.set(String.valueOf(token));
+                System.out.println(token);
+                word.set(String.valueOf(token));
+                tweetId.set(1);
 
-                    context.write(word, one);
-                }
+                context.write(word, tweetId);
 
             }
         }
     }
 
-    public static class AvgReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
-        private final IntWritable result = new IntWritable();
+    public static class AvgReducer extends Reducer<Text, DoubleWritable, Text, DoubleWritable> {
+        private final DoubleWritable result = new DoubleWritable();
 
-        public void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
+        public void reduce(Text key, Iterable<DoubleWritable> values, Context context) throws IOException, InterruptedException {
             int sum = 0;
 
-            for (IntWritable val : values) {
+            for (DoubleWritable val : values) {
                 sum += val.get();
             }
 
@@ -114,9 +114,9 @@ public class AirSupport {
         Job job = Job.getInstance(conf, "Airline tweets");
         job.setJarByClass(AirSupport.class);
         job.setMapperClass(TokenizerMapper.class);
-        job.setReducerClass(AvgReducer.class);
+//        job.setReducerClass(AvgReducer.class);
         job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(IntWritable.class);
+        job.setOutputValueClass(DoubleWritable.class);
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
         System.exit(job.waitForCompletion(true) ? 0 : 1);
