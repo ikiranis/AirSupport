@@ -6,7 +6,6 @@ import java.util.StringTokenizer;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -55,9 +54,9 @@ public class AirSupport {
         }
     }
 
-    public static class TokenizerMapper extends Mapper<Object, Text, Text, DoubleWritable> {
+    public static class TokenizerMapper extends Mapper<Object, Text, Text, LongWritable> {
 
-        private final static DoubleWritable tweetId = new DoubleWritable();
+        private final static LongWritable tweetId = new LongWritable();
         private final Text word = new Text();
 
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
@@ -84,21 +83,25 @@ public class AirSupport {
 
                 System.out.println(token);
                 word.set(String.valueOf(token));
-                tweetId.set(1);
 
-                context.write(word, tweetId);
+                try {
+                    tweetId.set((long) Double.parseDouble(tweet.getTweetId()));
 
+                    context.write(word, tweetId);
+                } catch (Exception e) {
+                    System.out.println(e.getMessage());
+                }
             }
         }
     }
 
-    public static class AvgReducer extends Reducer<Text, DoubleWritable, Text, DoubleWritable> {
-        private final DoubleWritable result = new DoubleWritable();
+    public static class AvgReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
+        private final IntWritable result = new IntWritable();
 
-        public void reduce(Text key, Iterable<DoubleWritable> values, Context context) throws IOException, InterruptedException {
+        public void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
             int sum = 0;
 
-            for (DoubleWritable val : values) {
+            for (IntWritable val : values) {
                 sum += val.get();
             }
 
@@ -116,7 +119,7 @@ public class AirSupport {
         job.setMapperClass(TokenizerMapper.class);
 //        job.setReducerClass(AvgReducer.class);
         job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(DoubleWritable.class);
+        job.setOutputValueClass(LongWritable.class);
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
         System.exit(job.waitForCompletion(true) ? 0 : 1);
