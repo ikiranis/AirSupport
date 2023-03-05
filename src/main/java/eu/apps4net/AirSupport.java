@@ -65,16 +65,16 @@ public class AirSupport {
             String line = value.toString();
             String tweetText = "";
 
-            // Αφαίρεση σημείων στίξης και μετατροπή σε lower case
+            // Σπάει την γραμμή σε στοιχεία
             String[] tweetArray = processLine(line);
 
             if(tweetArray != null) {
-                tweet = new Tweet(tweetArray[0], tweetArray[1], tweetArray[2], tweetArray[3], tweetArray[4], tweetArray[5], tweetArray[6], tweetArray[7], tweetArray[8], tweetArray[9]);
+                // Δημιουργία αντικειμένου Tweet
+                tweet = new Tweet(tweetArray);
 
-                // Αφαίρεση σημείων στίξης και μετατροπή σε lower case
-                tweetText = tweet.getText().replaceAll("\\p{Punct}", " ").toLowerCase();
+                // Παίρνει καθαρό κείμενο από το Tweet
+                tweetText = tweet.getClearedText();
             }
-
 
             StringTokenizer itr = new StringTokenizer(tweetText);
             while (itr.hasMoreTokens()) {
@@ -140,17 +140,17 @@ public class AirSupport {
         private final String tweetCreated;
         private final String userTimezone;
 
-        public Tweet(String tweetId, String airlineSentiment, String airlineSentimentConfidence, String negativeReason, String negativeReasonConfidence, String airline, String name, String text, String tweetCreated, String userTimezone) {
-            this.tweetId = tweetId;
-            this.airlineSentiment = airlineSentiment;
-            this.airlineSentimentConfidence = airlineSentimentConfidence;
-            this.negativeReason = negativeReason;
-            this.negativeReasonConfidence = negativeReasonConfidence;
-            this.airline = airline;
-            this.name = name;
-            this.text = text;
-            this.tweetCreated = tweetCreated;
-            this.userTimezone = userTimezone;
+        public Tweet(String[] tweetArray) {
+            this.tweetId = tweetArray[0];
+            this.airlineSentiment = tweetArray[1];
+            this.airlineSentimentConfidence = tweetArray[2];
+            this.negativeReason = tweetArray[3];
+            this.negativeReasonConfidence = tweetArray[4];
+            this.airline = tweetArray[5];
+            this.name = tweetArray[6];
+            this.text = tweetArray[7];
+            this.tweetCreated = tweetArray[8];
+            this.userTimezone = tweetArray[9];
         }
 
         public String getTweetId() {
@@ -183,6 +183,20 @@ public class AirSupport {
 
         public String getText() {
             return text;
+        }
+
+        /**
+         * Επιστρέφει καθαρισμένο το κείμενο, αφήνοντας μόνο λέξεις, mentions και hashtags
+         *
+         * @return String
+         */
+        public String getClearedText() {
+            return text.replaceAll("^[0-9]+", "")
+                    .replaceAll("http\\S+", "")
+                    .replaceAll("[^\\p{L}\\p{Nd}\\s@#]", "")
+                    .replaceAll("\\p{C}", "")
+                    .replaceAll("\\s+", " ")
+                    .toLowerCase();
         }
 
         public String getTweetCreated() {
