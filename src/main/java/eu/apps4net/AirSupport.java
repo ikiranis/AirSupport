@@ -20,6 +20,10 @@ public class AirSupport {
     /**
      * This method uses a regular expression to split each line to a list of strings,
      * each one representing one column
+     *
+     * source: 2ο θέμα, 3ης εργασία ΠΛΗ47, του 2021-2022
+     *
+     * @param line string to be split
      */
     private static String[] processLine(String line) {
         // Create a regular expression for proper split of each line
