@@ -16,8 +16,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 public class AirSupport {
 
     /**
-     * This method uses a regular expression to split each line to a list of strings,
-     * each one representing one column
+     * Σπάει τη γραμμή του CSV σε στοιχεία, αποφεύγοντας να διαχωρίζει τα στοιχεία μέσα σε εισαγωγικά
      *
      * source: 2ο θέμα, 3ης εργασία ΠΛΗ47, του 2021-2022
      *
@@ -67,9 +66,10 @@ public class AirSupport {
             String line = value.toString();
             String tweetText = "";
 
-            // Σπάει την γραμμή σε στοιχεία
+            // Σπάει τη γραμμή σε στοιχεία
             String[] tweetArray = processLine(line);
 
+            // Αν το tweetArray δεν είναι null
             if(tweetArray != null) {
                 // Δημιουργία αντικειμένου Tweet
                 tweet = new Tweet(tweetArray);
@@ -78,17 +78,25 @@ public class AirSupport {
                 tweetText = tweet.getClearedText();
             }
 
+            // Παίρνει την τρέχουσα γραμμή σε tokens
             StringTokenizer itr = new StringTokenizer(tweetText);
+
+            // Επεξεργάζεται το κάθε token
             while (itr.hasMoreTokens()) {
-                // Reads each word and removes (strips) the white space
                 String token = itr.nextToken().strip();
 
-//                System.out.println(token);
+                // Αγνοεί τα tokens μικρότερα από 3 χαρακτήρες
+                if (token.length() < 3) {
+                    continue;
+                }
+
                 word.set(String.valueOf(token));
 
                 try {
+                    // Παίρνει το tweetId και το μετατρέπει σε long, αφού πρώτα το μετατρέψει σε double
                     tweetId.set((long) Double.parseDouble(tweet.getTweetId()));
 
+                    // Αποθηκεύει το token και το tweetId στο context
                     context.write(word, tweetId);
                 } catch (Exception e) {
                     System.out.println(e.getMessage());
@@ -103,12 +111,15 @@ public class AirSupport {
         public void reduce(Text key, Iterable<LongWritable> values, Context context) throws IOException, InterruptedException {
             StringBuilder text = new StringBuilder();
 
+            // Δημιουργία string με όλα τα tweetIds
             for (LongWritable val : values) {
                 text.append(String.valueOf(val)).append(" ");
             }
 
+            // Αποθηκεύει το string στο result
             result.set(String.valueOf(text));
 
+            // Αποθηκεύει το token και το string στο context
             context.write(key, result);
         }
     }
@@ -159,32 +170,8 @@ public class AirSupport {
             return tweetId;
         }
 
-        public String getAirlineSentiment() {
-            return airlineSentiment;
-        }
-
-        public String getAirlineSentimentConfidence() {
-            return airlineSentimentConfidence;
-        }
-
-        public String getNegativeReason() {
-            return negativeReason;
-        }
-
-        public String getNegativeReasonConfidence() {
-            return negativeReasonConfidence;
-        }
-
-        public String getAirline() {
-            return airline;
-        }
-
         public String getName() {
             return name;
-        }
-
-        public String getText() {
-            return text;
         }
 
         /**
@@ -199,14 +186,6 @@ public class AirSupport {
                     .replaceAll("\\p{C}", "")
                     .replaceAll("\\s+", " ")
                     .toLowerCase();
-        }
-
-        public String getTweetCreated() {
-            return tweetCreated;
-        }
-
-        public String getUserTimezone() {
-            return userTimezone;
         }
 
         @Override
