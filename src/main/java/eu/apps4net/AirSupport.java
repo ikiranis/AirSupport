@@ -117,7 +117,6 @@ public class AirSupport {
             for (LongWritable val : values) {
                 tweetIds.add(String.valueOf(val));
             }
-            System.out.println(tweetIds);
 
             StringJoiner text = new StringJoiner(" ");
             for (String tweetId : tweetIds) {
