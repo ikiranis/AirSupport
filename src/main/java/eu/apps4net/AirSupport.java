@@ -1,6 +1,8 @@
 package eu.apps4net;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.StringJoiner;
 import java.util.StringTokenizer;
 
 import org.apache.hadoop.conf.Configuration;
@@ -109,11 +111,17 @@ public class AirSupport {
         private final Text result = new Text();
 
         public void reduce(Text key, Iterable<LongWritable> values, Context context) throws IOException, InterruptedException {
-            StringBuilder text = new StringBuilder();
-
-            // Δημιουργία string με όλα τα tweetIds
+            // Δημιουργία string με όλα τα tweetIds, αφαιρώντας τα πιθανά διπλά
+            // (λέξεις που εμφανίζονται που εμφανίζονται πάνω από μία φορά στο ίδιο tweet)
+            HashSet<String> tweetIds = new HashSet<>();
             for (LongWritable val : values) {
-                text.append(String.valueOf(val)).append(" ");
+                tweetIds.add(String.valueOf(val));
+            }
+            System.out.println(tweetIds);
+
+            StringJoiner text = new StringJoiner(" ");
+            for (String tweetId : tweetIds) {
+                text.add(tweetId);
             }
 
             // Αποθηκεύει το string στο result
